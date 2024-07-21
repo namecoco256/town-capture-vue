@@ -14,6 +14,11 @@
   let mediaSize = screenSize//screenSizeは仮置き
   let canvasCtx
   let canvasId
+  const isWindowSelected = ref(false)
+
+  //押されたボタンのkeycode
+  const captureKeyCode = ref(false)
+  const onShortCutKeySetting = ref(false)
   /// 変数の定義 ここまで ///
 
 
@@ -24,13 +29,15 @@
     canvas = document.querySelector('canvas')
     canvasCtx = canvas.getContext('2d')
 
+    captureKeyCode.value = localStorage.getItem('shortcutkey')
+
     onWindowSelect()
   })
   /// 起動時のセットアップ ここまで///
 
 
 
-  ///// 画面取得とレンダリング /////
+  /// 画面取得とレンダリング ///
   function onWindowSelect() {
     // video要素にキャプチャ画面を表示する
     console.log('start')
@@ -47,12 +54,11 @@
       //キャプチャ画面を表示
       isWindowSelected.value = true
     });
-    
     _canvasUpdate()
   }
 
   function _canvasUpdate() {
-    // videoRendering()
+    
     canvasId = requestAnimationFrame(_canvasUpdate)
   };
 
@@ -73,15 +79,32 @@
       canvasCtx.drawImage(video, (canvas.width - fixedWidth) / 2, 0, fixedWidth, canvas.height)
     }
   }
+  /// 画面表示とレンダリング ここまで ///
 
+  /// ショートカットキーの設定 ///
+  function shortCutKeySetting(){
+    onShortCutKeySetting.value = true
+    captureKeyCode.value = "設定中"
+  }
+  document.onkeydown = (e) =>{
+    if(e && onShortCutKeySetting.value){
+      captureKeyCode.value = e.code
+      onShortCutKeySetting.value = false
+      window.localStorage.setItem("shortcutkey", captureKeyCode.value)
+    } else if(!onShortCutKeySetting.value && captureKeyCode.value == e.code){
+      videoRendering()
+    }
+  }
 
 </script>
 
 <template>
-  <video id="video" autoplay style="display:none;"></video>
-    
-  <canvas id="canvas" :width="canvasSize.width" :height="canvasSize.height"></canvas>
+  <button @click="shortCutKeySetting">ショートカットキー : {{ captureKeyCode }}</button>
   <button @click="videoRendering">Capture</button>
+  <button @click="onWindowSelect">ウィンドウを変更</button>
+  <br>
+  <video id="video" autoplay style="display:none;"></video>
+  <canvas id="canvas" :width="canvasSize.width" :height="canvasSize.height"></canvas>
 </template>
 
 <style scoped>
